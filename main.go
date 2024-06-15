@@ -14,11 +14,12 @@ func main() {
 	defer file.Close()
 
 	parser := parser.NewParser(file)
-	// parser.ParseDEBUG()
 	tables, err := parser.Parse()
 	if err != nil {
 		panic(err)
 	}
+	storage := NewStorage()
+
 	for _, table := range tables {
 		// fmt.Println("---")
 		// fmt.Println(table.Name, table.Position.String())
@@ -30,7 +31,7 @@ func main() {
 		// 	fmt.Println()
 		// }
 		table.Print()
-
+		storage.PutTable(table)
 	}
 	_ = tables
 }
