@@ -54,7 +54,7 @@ func (s *Scanner) Scan() LexItem {
 		return s.scanIdent()
 	}
 
-	token := mapSpecialChar(char)
+	token := mapChar(char)
 	if token == LINEBR {
 		s.line += 1
 		s.offset = 0
@@ -69,8 +69,6 @@ func (s *Scanner) Scan() LexItem {
 		},
 	}
 
-	// return mapSpecialChar(char), string(char)
-	// return token, string(char)
 	return item
 
 }
@@ -92,7 +90,7 @@ func (s *Scanner) ScanComposite(endChar rune) LexItem {
 	literal := buf.String()
 	item := LexItem{
 		value: literal,
-		token: mapIdentLiteral(literal),
+		token: mapLiteral(literal),
 		position: Position{
 			line:   s.line,
 			offset: s.offset - length,
@@ -104,6 +102,7 @@ func (s *Scanner) ScanComposite(endChar rune) LexItem {
 }
 
 // Scan unfiltered (with whitespace, ...)
+/*
 func (s *Scanner) Scan2(includeWhitespace bool) LexItem {
 	char := s.read()
 	fmt.Printf("scan2 %q\n", char)
@@ -119,7 +118,7 @@ func (s *Scanner) Scan2(includeWhitespace bool) LexItem {
 		return s.scanIdent()
 	}
 
-	token := mapSpecialChar(char)
+	token := mapChar(char)
 	if token == LINEBR {
 		s.line += 1
 		s.offset = 0
@@ -134,10 +133,9 @@ func (s *Scanner) Scan2(includeWhitespace bool) LexItem {
 		},
 	}
 
-	// return mapSpecialChar(char), string(char)
-	// return token, string(char)
 	return item
 }
+*/
 
 // read reads the next rune (char) from the (buffered) reader.
 // Returns the rune(0) if an error occurs (or eofChar is returned).
@@ -213,7 +211,7 @@ func (s *Scanner) scanIdent() LexItem {
 	literal := buf.String()
 	item := LexItem{
 		value: literal,
-		token: mapIdentLiteral(literal),
+		token: mapLiteral(literal),
 		position: Position{
 			line:   s.line,
 			offset: s.offset - length,
@@ -221,64 +219,6 @@ func (s *Scanner) scanIdent() LexItem {
 		},
 	}
 	return item
-}
-
-func mapIdentLiteral(literal string) Token {
-	switch literal {
-	case "Table":
-		return TABLE
-	case "enum":
-		return ENUM
-	case "pk":
-		return CONS_PK
-	case "primary":
-		return CONS_PRIMARY
-	case "key":
-		return CONS_KEY
-	case "null":
-		return CONS_NULL
-	case "not":
-		return CONS_NOT
-	case "increment":
-		return CONS_INCREMENT
-	case "unique":
-		return CONS_UNIQUE
-	case "note":
-		return NOTE
-	default:
-
-	}
-	return IDENT
-}
-
-func mapSpecialChar(char rune) Token {
-	switch char {
-	case '\n':
-		return LINEBR
-	case eofChar:
-		return EOF
-	case '/':
-		return SLASH
-	case '{':
-		return BRACE_OPEN
-	case '}':
-		return BRACE_CLOSE
-	case '[':
-		return SQUARE_OPEN
-	case ']':
-		return SQUARE_CLOSE
-	case '"':
-		return QUOTATION
-	case ',':
-		return COMMA
-	case ':':
-		return COLON
-	// case '`':
-	// return BACKTICK
-	// ...handle other chars
-	default:
-	}
-	return UNKOWN
 }
 
 //

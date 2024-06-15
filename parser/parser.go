@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"errors"
 	"fmt"
 	"io"
 )
@@ -57,11 +56,6 @@ func (p *Parser) scanWithoutWhitespace() LexItem {
 	return item
 }
 
-// func (p *Parser) scanEnquoted() LexItem {
-// 	item
-//
-// }
-
 func (p *Parser) Parse() ([]*TableStatement, error) {
 	var tables []*TableStatement
 	for {
@@ -97,82 +91,16 @@ func (p *Parser) ParseDEBUG() {
 }
 
 func (p *Parser) parseTableDefinition() (*TableStatement, error) {
-	statement := &TableStatement{}
-	tableItem, found := p.expect(TABLE)
-	if !found {
-		return nil, fmt.Errorf("found %q, expected 'Table'", tableItem.value)
-	}
-	statement.Position = tableItem.position
-
-	// find name declaration
-	nameItem, found := p.expect(IDENT)
-	if !found {
-		return nil, fmt.Errorf("found %q, expected table name declaration", nameItem.value)
-	}
-	statement.Name = nameItem.value
-
-	// find opening brace and linebreak
-	_, found = p.expectSequence(BRACE_OPEN, LINEBR)
-	if !found {
-		return nil, errors.New("found ?, expected delimiter '{' for table head end")
-	}
-
-	// column definitions
-	for {
-		columnItem := p.scanWithoutWhitespace()
-		switch columnItem.token {
-		case LINEBR:
-			continue
-		case BRACE_CLOSE:
-			return statement, nil
-		default:
-			p.unscan()
-			column, err := p.parseColumnDefinition()
-			if err != nil {
-				return nil, err
-			}
-			statement.Columns = append(statement.Columns, column)
-		}
-	}
+	parser := &TableParser{p}
+	return parser.Parse()
 }
 
 // parseColumnDefinition parses a column definition.
 // e.g. id integer [pk, unique]
 // returns a column statement and error
 func (p *Parser) parseColumnDefinition() (*ColumnStatement, error) {
-	statement := &ColumnStatement{}
-
-	// colum name
-	nameItem, found := p.expect(IDENT)
-	if !found {
-		return nil, fmt.Errorf("found %q, expected column name", nameItem.value)
-	}
-	statement.Name = nameItem.value
-	statement.Position = nameItem.position
-
-	// column type
-	typeItem, found := p.expect(IDENT)
-	if !found {
-		return nil, fmt.Errorf("found %q, expected column type", typeItem.value)
-	}
-	statement.Type = typeItem.value
-
-	// look for constraints
-	item, found := p.expect(SQUARE_OPEN)
-	if !found {
-		if item.token != LINEBR {
-			return nil, fmt.Errorf("found %q, expected column definition stop", item.value)
-		}
-	} else {
-		// constraints definition found
-		constraints, err := p.parseConstraints()
-		if err != nil {
-			return nil, fmt.Errorf("incorrect constraint declaration: %s", err.Error())
-		}
-		statement.Constraints = constraints
-	}
-
-	return statement, nil
+	parser := &ColumnParser{p}
+	return parser.Parse()
 }
 
 // parseConstraints returns a list of constraints.
@@ -180,84 +108,8 @@ func (p *Parser) parseColumnDefinition() (*ColumnStatement, error) {
 // a, b, c]
 // ^ starting position
 func (p *Parser) parseConstraints() ([]string, error) {
-	var constraints []string
-	var lastToken int
-	for {
-		constraintItem := p.scanWithoutWhitespace()
-		switch constraintItem.token {
-		case SQUARE_CLOSE:
-			if len(constraints) == 0 {
-				return nil, errors.New("empty constraints declaration")
-			}
-			return constraints, nil
-		case COMMA:
-			// TODO: handle first token: ';'
-			if lastToken == COMMA {
-				return nil, fmt.Errorf("found %q, expected constraint delimiter", constraintItem.value)
-			}
-		case CONS_PK:
-			constraints = append(constraints, constraintItem.value)
-		case CONS_PRIMARY:
-			item, found := p.expect(CONS_KEY)
-			if !found {
-				return nil, fmt.Errorf("found %q, expected 'key' after 'primary'", item.value)
-			}
-			constraints = append(constraints, "primary key")
-		case CONS_INCREMENT:
-			fallthrough
-		case CONS_UNIQUE:
-			constraints = append(constraints, constraintItem.value)
-
-		case NOTE:
-			item, err := p.parseKeyConstraint(NOTE)
-			if err != nil {
-				fmt.Println(err)
-			}
-			keyedConstraintValue := item.Key + ":" + item.Value
-			constraints = append(constraints, keyedConstraintValue)
-		case CONS_NOT:
-			item, found := p.expect(CONS_NULL)
-			if !found {
-				return nil, fmt.Errorf("found %q, expected 'null' (not null)", item.value)
-			}
-			constraints = append(constraints, "not null")
-
-		case UNKOWN:
-
-		default:
-			// error unkown token
-			if constraintItem.token == IDENT {
-				return nil, fmt.Errorf("found %q, expected contraint", constraintItem.value)
-			}
-			return nil, fmt.Errorf("unhandled non-ident item %q (%d), last: %d", constraintItem.value, constraintItem.token, lastToken)
-		}
-	}
-}
-
-type KeyConstraint struct {
-	Key   string
-	Value string
-}
-
-func (p *Parser) parseKeyConstraint(keyToken Token) (constraint KeyConstraint, err error) {
-	if keyToken != NOTE {
-		return constraint, fmt.Errorf("unexpected keyed constraint: %q", keyToken)
-	}
-	constraint.Key = "note"
-	item, found := p.expect(COLON)
-	if !found {
-		return constraint, fmt.Errorf("found %q, expected ':' (key-value-delimiter missing)", item.value)
-	}
-
-	item, found = p.expect(QUOTATION)
-	if !found {
-		return constraint, fmt.Errorf("found %q, expected /\" (enclosing quotation start missing)", item.value)
-	}
-
-	item = p.scanner.ScanComposite('"')
-
-	constraint.Value = item.value
-	return
+	parser := &ConstraintParser{p}
+	return parser.Parse()
 }
 
 func (p *Parser) handleComment() {
@@ -278,20 +130,19 @@ func (p *Parser) jumpLineEnd() {
 	}
 }
 
-type scanWhileFunc func(LexItem) bool
-
-func (p *Parser) scanWhile(whileFunc scanWhileFunc) string {
-	var out string
-	for {
-		item := p.scan()
-		if item.token == LINEBR || !whileFunc(item) {
-			fmt.Printf("returning %q\n", out)
-			return out
-		}
-		out += item.value
-	}
-	return "???"
-}
+// type scanWhileFunc func(LexItem) bool
+// func (p *Parser) scanWhile(whileFunc scanWhileFunc) string {
+// 	var out string
+// 	for {
+// 		item := p.scan()
+// 		if item.token == LINEBR || !whileFunc(item) {
+// 			fmt.Printf("returning %q\n", out)
+// 			return out
+// 		}
+// 		out += item.value
+// 	}
+// 	return "???"
+// }
 
 func (p *Parser) expect(expected Token) (item LexItem, found bool) {
 	item = p.scanWithoutWhitespace()
