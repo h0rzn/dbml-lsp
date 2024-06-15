@@ -1,0 +1,11 @@
+Table tableA { 
+	id integer [pk, unique]
+	keyB valB [note: "test123 123", unique]
+}
+
+Table tableB {
+	id integer [not null, unique]
+	keyBB integer [primary key]
+	keyBC type [pk, primary key]
+}
+
