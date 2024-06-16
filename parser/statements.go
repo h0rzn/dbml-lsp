@@ -48,3 +48,20 @@ type ColumnStatement struct {
 	Constraints []string
 	Position    Position
 }
+
+type Relationship struct {
+	Name    string
+	SchemeA string
+	TableA  string
+	ColumnA string
+	SchemeB string
+	TableB  string
+	ColumnB string
+	Type    string
+}
+
+func (r *Relationship) String() string {
+	format := "%s %s.%s.%s %s %s.%s.%s"
+	return fmt.Sprintf(format, r.Name, r.SchemeA, r.TableA, r.ColumnA, r.Type, r.SchemeB, r.TableB, r.ColumnB)
+
+}

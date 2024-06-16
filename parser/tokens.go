@@ -1,13 +1,13 @@
 package parser
 
-type Token int
+type Token uint64
 
 // syntax tokens
 const (
 	//
 	// meta
 	//
-	IDENT      = iota
+	IDENT      = 1 << iota
 	WHITESPACE // whitespace
 	LINEBR     // line break \n
 	EOF        // end-of-file
@@ -20,6 +20,8 @@ const (
 	TABLE              // Table
 	ENUM               // enum
 	COL_SETTING_CUSTOM // something like id "bigint unsigned" [pk]
+	REF_CAP            // Ref
+	REF_LOW            // ref (inline)
 	// keywords: constraints
 	CONS_PK        // pk (short for primary key)
 	CONS_PRIMARY   // primary (followed by key)
@@ -30,6 +32,11 @@ const (
 	CONS_UNIQUE
 
 	NOTE
+
+	REL_1T1 // -
+	REL_1TM // <
+	REL_MT1 // >
+	REL_MTN // <>
 
 	//
 	// delimiters
@@ -46,7 +53,12 @@ const (
 	APOSTROPHE   // '
 	// BACKTICK     // `
 	QUOTATION // \"
+	DOT       // .
 
+	//
+	// GROUPS
+	//
+	G_RELATION_TYPE = REL_1T1 | REL_MT1 | REL_1TM | REL_MTN
 )
 
 func mapLiteral(literal string) Token {
@@ -71,6 +83,12 @@ func mapLiteral(literal string) Token {
 		return CONS_UNIQUE
 	case "note":
 		return NOTE
+	case "Ref":
+		return REF_CAP
+	case "ref":
+		return REF_LOW
+	case "<>":
+		return REL_MTN
 	default:
 
 	}
@@ -99,9 +117,14 @@ func mapChar(char rune) Token {
 		return COMMA
 	case ':':
 		return COLON
-	// case '`':
-	// return BACKTICK
-	// ...handle other chars
+	case '.':
+		return DOT
+	case '-':
+		return REL_1T1
+	case '>':
+		return REL_MT1
+	case '<':
+		return REL_1TM
 	default:
 	}
 	return UNKOWN

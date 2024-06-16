@@ -57,6 +57,13 @@ func (c *ConstraintParser) Parse() ([]string, error) {
 			}
 			constraints = append(constraints, "not null")
 
+		case REF_LOW:
+			rel, err := c.parseRelationship(true)
+			if err != nil {
+				return nil, err
+			}
+			constraints = append(constraints, rel.String())
+
 		case UNKOWN:
 
 		default:

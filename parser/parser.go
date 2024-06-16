@@ -66,13 +66,25 @@ func (p *Parser) Parse() ([]*TableStatement, error) {
 		if item.token == LINEBR {
 			continue
 		}
-		p.unscan()
+		// p.unscan()
 
-		table, err := p.parseTableDefinition()
-		if err != nil {
-			return nil, err
+		switch item.token {
+		case TABLE:
+			p.unscan()
+			table, err := p.parseTableDefinition()
+			if err != nil {
+				return nil, err
+			}
+			tables = append(tables, table)
+		case REF_CAP:
+			rel, err := p.parseRelationship(false)
+			if err != nil {
+				return nil, err
+			}
+			fmt.Printf("relationship: %+v\n", rel)
+		default:
+			return tables, fmt.Errorf("unexpected: %q", item.value)
 		}
-		tables = append(tables, table)
 	}
 
 	return tables, nil
@@ -93,6 +105,11 @@ func (p *Parser) ParseDEBUG() {
 func (p *Parser) parseTableDefinition() (*TableStatement, error) {
 	parser := &TableParser{p}
 	return parser.Parse()
+}
+
+func (p *Parser) parseRelationship(inline bool) (*Relationship, error) {
+	parser := &RelationshipParser{p}
+	return parser.Parse(inline)
 }
 
 // parseColumnDefinition parses a column definition.

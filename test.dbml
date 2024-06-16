@@ -1,11 +1,17 @@
 Table tableA { 
 	id integer [pk, unique]
 	keyB valB [note: "test123 123", unique]
+	a b [ref: - tableB.id]
 }
 
 Table tableB {
 	id integer [not null, unique]
 	keyBB integer [primary key]
 	keyBC type [pk, primary key]
+}
+
+
+Ref test {
+	t1.c1 - s2.t2.c2
 }
 

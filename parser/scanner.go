@@ -58,7 +58,24 @@ func (s *Scanner) Scan() LexItem {
 	if token == LINEBR {
 		s.line += 1
 		s.offset = 0
+	} else if (token & REL_1TM) != 0 {
+		// could potentially be <> and not just <
+		if s.read() != '>' {
+			s.unread()
+		} else {
+			s.offset += 1
+			return LexItem{
+				value: "<>",
+				token: REL_MTN,
+				position: Position{
+					line:   s.line,
+					offset: s.offset,
+					len:    2,
+				},
+			}
+		}
 	}
+
 	item := LexItem{
 		value: string(char),
 		token: token,
