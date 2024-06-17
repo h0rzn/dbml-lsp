@@ -50,12 +50,12 @@ func (r *RelationshipParser) Parse(inline bool) (*Relationship, error) {
 		return nil, err
 	}
 	if len(sideRight) > 2 {
-		relationship.SchemeA = sideRight[0].value
-		relationship.TableA = sideRight[1].value
-		relationship.ColumnA = sideRight[2].value
+		relationship.SchemeB = sideRight[0].value
+		relationship.TableB = sideRight[1].value
+		relationship.ColumnB = sideRight[2].value
 	} else {
-		relationship.TableA = sideRight[0].value
-		relationship.ColumnA = sideRight[1].value
+		relationship.TableB = sideRight[0].value
+		relationship.ColumnB = sideRight[1].value
 	}
 
 	return relationship, nil

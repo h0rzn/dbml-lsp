@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/h0rzn/dbml-lsp/parser"
@@ -14,24 +15,12 @@ func main() {
 	defer file.Close()
 
 	parser := parser.NewParser(file)
-	tables, err := parser.Parse()
+	err = parser.Parse()
 	if err != nil {
 		panic(err)
 	}
-	storage := NewStorage()
-
-	for _, table := range tables {
-		// fmt.Println("---")
-		// fmt.Println(table.Name, table.Position.String())
-		// for _, column := range table.Columns {
-		// 	fmt.Println("-- column", column.Name, column.Position.String())
-		// 	for _, constraint := range column.Constraints {
-		// 		fmt.Printf("\t %q", constraint)
-		// 	}
-		// 	fmt.Println()
-		// }
-		table.Print()
-		storage.PutTable(table)
+	fmt.Println(parser.Symbols.Info())
+	for i, rel := range parser.Symbols.GetRelations() {
+		fmt.Println(i, rel)
 	}
-	_ = tables
 }

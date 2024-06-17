@@ -14,28 +14,29 @@ type ConstraintParser struct {
 	*Parser
 }
 
-func (c *ConstraintParser) Parse() ([]string, error) {
+func (c *ConstraintParser) Parse() ([]string, []*Relationship, error) {
 	var constraints []string
+	var relations []*Relationship
 	var lastToken int
 	for {
 		constraintItem := c.scanWithoutWhitespace()
 		switch constraintItem.token {
 		case SQUARE_CLOSE:
 			if len(constraints) == 0 {
-				return nil, errors.New("empty constraints declaration")
+				return nil, nil, errors.New("empty constraints declaration")
 			}
-			return constraints, nil
+			return constraints, relations, nil
 		case COMMA:
 			// TODO: handle first token: ';'
 			if lastToken == COMMA {
-				return nil, fmt.Errorf("found %q, expected constraint delimiter", constraintItem.value)
+				return nil, nil, fmt.Errorf("found %q, expected constraint delimiter", constraintItem.value)
 			}
 		case CONS_PK:
 			constraints = append(constraints, constraintItem.value)
 		case CONS_PRIMARY:
 			item, found := c.expect(CONS_KEY)
 			if !found {
-				return nil, fmt.Errorf("found %q, expected 'key' after 'primary'", item.value)
+				return nil, nil, fmt.Errorf("found %q, expected 'key' after 'primary'", item.value)
 			}
 			constraints = append(constraints, "primary key")
 		case CONS_INCREMENT:
@@ -53,25 +54,26 @@ func (c *ConstraintParser) Parse() ([]string, error) {
 		case CONS_NOT:
 			item, found := c.expect(CONS_NULL)
 			if !found {
-				return nil, fmt.Errorf("found %q, expected 'null' (not null)", item.value)
+				return nil, nil, fmt.Errorf("found %q, expected 'null' (not null)", item.value)
 			}
 			constraints = append(constraints, "not null")
 
 		case REF_LOW:
 			rel, err := c.parseRelationship(true)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
+			// TODO: dont take [] as empty constraint declaration
 			constraints = append(constraints, rel.String())
-
+			relations = append(relations, rel)
 		case UNKOWN:
 
 		default:
 			// error unkown token
 			if constraintItem.token == IDENT {
-				return nil, fmt.Errorf("found %q, expected contraint", constraintItem.value)
+				return nil, nil, fmt.Errorf("found %q, expected contraint", constraintItem.value)
 			}
-			return nil, fmt.Errorf("unhandled non-ident item %q (%d), last: %d", constraintItem.value, constraintItem.token, lastToken)
+			return nil, nil, fmt.Errorf("unhandled non-ident item %q (%d), last: %d", constraintItem.value, constraintItem.token, lastToken)
 		}
 	}
 }

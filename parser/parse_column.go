@@ -32,11 +32,16 @@ func (c *ColumnParser) Parse() (*ColumnStatement, error) {
 		}
 	} else {
 		// constraints definition found
-		constraints, err := c.parseConstraints()
+		constraints, relations, err := c.parseConstraints()
 		if err != nil {
 			return nil, fmt.Errorf("incorrect constraint declaration: %s", err.Error())
 		}
 		statement.Constraints = constraints
+		for _, relation := range relations {
+			fmt.Printf("* %+v\n", relation)
+			relation.ColumnA = nameItem.value
+			c.Symbols.PutRelation(relation)
+		}
 	}
 
 	return statement, nil

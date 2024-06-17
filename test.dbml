@@ -10,8 +10,3 @@ Table tableB {
 	keyBC type [pk, primary key]
 }
 
-
-Ref test {
-	t1.c1 - s2.t2.c2
-}
-

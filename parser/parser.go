@@ -9,18 +9,52 @@ var debug = true
 
 type Parser struct {
 	scanner *Scanner
+	Symbols *Storage
 	buffer  struct {
-		// literal string
 		current LexItem
-		// token   Token
-		size int
+		size    int
 	}
 }
 
 func NewParser(r io.Reader) *Parser {
 	return &Parser{
 		scanner: NewScanner(r),
+		Symbols: NewStorage(),
 	}
+}
+
+func (p *Parser) Parse() error {
+	for {
+		item := p.scanWithoutWhitespace()
+		if item.token == EOF || item.token == BRACE_CLOSE {
+			break
+		}
+		if item.token == LINEBR {
+			continue
+		}
+
+		switch item.token {
+		case TABLE:
+			p.unscan()
+			table, err := p.parseTableDefinition()
+			if err != nil {
+				return err
+			}
+			p.Symbols.PutTable(table)
+		case REF_CAP:
+			// explicit pass of declaration type,
+			// introducing token is not expected
+			rel, err := p.parseRelationship(false)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("relationship: %+v\n", rel)
+			p.Symbols.PutRelation(rel)
+		default:
+			return fmt.Errorf("unexpected: %q", item.value)
+		}
+	}
+	return nil
 }
 
 // scan returns next token from scanner.
@@ -56,52 +90,6 @@ func (p *Parser) scanWithoutWhitespace() LexItem {
 	return item
 }
 
-func (p *Parser) Parse() ([]*TableStatement, error) {
-	var tables []*TableStatement
-	for {
-		item := p.scanWithoutWhitespace()
-		if item.token == EOF || item.token == BRACE_CLOSE {
-			break
-		}
-		if item.token == LINEBR {
-			continue
-		}
-		// p.unscan()
-
-		switch item.token {
-		case TABLE:
-			p.unscan()
-			table, err := p.parseTableDefinition()
-			if err != nil {
-				return nil, err
-			}
-			tables = append(tables, table)
-		case REF_CAP:
-			rel, err := p.parseRelationship(false)
-			if err != nil {
-				return nil, err
-			}
-			fmt.Printf("relationship: %+v\n", rel)
-		default:
-			return tables, fmt.Errorf("unexpected: %q", item.value)
-		}
-	}
-
-	return tables, nil
-}
-
-func (p *Parser) ParseDEBUG() {
-	for {
-		item := p.scanWithoutWhitespace()
-		if item.token == EOF {
-			break
-		}
-		if item.token == LINEBR {
-			fmt.Println("linebr")
-		}
-	}
-}
-
 func (p *Parser) parseTableDefinition() (*TableStatement, error) {
 	parser := &TableParser{p}
 	return parser.Parse()
@@ -124,7 +112,7 @@ func (p *Parser) parseColumnDefinition() (*ColumnStatement, error) {
 // this function expects the opening square bracket '[' to be already read
 // a, b, c]
 // ^ starting position
-func (p *Parser) parseConstraints() ([]string, error) {
+func (p *Parser) parseConstraints() ([]string, []*Relationship, error) {
 	parser := &ConstraintParser{p}
 	return parser.Parse()
 }
