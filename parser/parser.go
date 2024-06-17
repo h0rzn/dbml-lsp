@@ -26,10 +26,10 @@ func NewParser(r io.Reader) *Parser {
 func (p *Parser) Parse() error {
 	for {
 		item := p.scanWithoutWhitespace()
-		if item.token == EOF || item.token == BRACE_CLOSE {
+		if item.IsToken(EOF) || item.IsToken(BRACE_CLOSE) {
 			break
 		}
-		if item.token == LINEBR {
+		if item.IsToken(LINEBR) {
 			continue
 		}
 
@@ -84,7 +84,7 @@ func (p *Parser) unscan() {
 // scanWithoutWhitespace scans next token ignoring whitespace
 func (p *Parser) scanWithoutWhitespace() LexItem {
 	item := p.scan()
-	if item.token == WHITESPACE {
+	if item.IsToken(WHITESPACE) {
 		item = p.scan()
 	}
 	return item
@@ -129,29 +129,15 @@ func (p *Parser) handleComment() {
 func (p *Parser) jumpLineEnd() {
 	for {
 		item := p.scan()
-		if item.token == LINEBR {
+		if item.IsToken(LINEBR) {
 			return
 		}
 	}
 }
 
-// type scanWhileFunc func(LexItem) bool
-// func (p *Parser) scanWhile(whileFunc scanWhileFunc) string {
-// 	var out string
-// 	for {
-// 		item := p.scan()
-// 		if item.token == LINEBR || !whileFunc(item) {
-// 			fmt.Printf("returning %q\n", out)
-// 			return out
-// 		}
-// 		out += item.value
-// 	}
-// 	return "???"
-// }
-
 func (p *Parser) expect(expected Token) (item LexItem, found bool) {
 	item = p.scanWithoutWhitespace()
-	if item.token != expected {
+	if !item.IsToken(expected) {
 		return item, false
 	}
 	return item, true
@@ -160,7 +146,7 @@ func (p *Parser) expect(expected Token) (item LexItem, found bool) {
 func (p *Parser) expectAlternative(expected ...Token) (item LexItem, found bool) {
 	item = p.scanWithoutWhitespace()
 	for _, foundToken := range expected {
-		if item.token == foundToken {
+		if item.IsToken(foundToken) {
 			return item, true
 		}
 	}

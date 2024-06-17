@@ -20,7 +20,11 @@ func main() {
 		panic(err)
 	}
 	fmt.Println(parser.Symbols.Info())
-	for i, rel := range parser.Symbols.GetRelations() {
+	for i, rel := range parser.Symbols.Relations() {
 		fmt.Println(i, rel)
+	}
+	fmt.Println("---")
+	for name, tbl := range parser.Symbols.Tables() {
+		fmt.Println(name, tbl)
 	}
 }

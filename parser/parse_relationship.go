@@ -15,23 +15,22 @@ func (r *RelationshipParser) Parse(inline bool) (*Relationship, error) {
 	if !inline {
 		item = r.scanWithoutWhitespace()
 		// catch optional name
-		if (item.token & IDENT) != 0 {
+		if item.IsToken(IDENT) {
 			relationship.Name = item.value
 			item = r.scanWithoutWhitespace()
 		}
 
-		if (item.token & BRACE_OPEN) != 0 {
+		if item.IsToken(BRACE_OPEN) {
 			item = r.scanWithoutWhitespace()
 			if (item.token & LINEBR) == 0 {
 				return nil, fmt.Errorf("found %q, expected linebr after '{' for long relationsip declaration %d", item.value, item.position.line)
 			}
 		} else {
-			if (item.token & COLON) == 0 {
+			if item.IsToken(COLON) {
 				fmt.Println("??")
 			}
 		}
 		relationship, err := r.parseLong()
-		fmt.Println(relationship)
 		return relationship, err
 	}
 
@@ -41,7 +40,7 @@ func (r *RelationshipParser) Parse(inline bool) (*Relationship, error) {
 	}
 
 	item = r.scanWithoutWhitespace()
-	if !r.isRelationToken(item.token) {
+	if !item.IsToken(G_RELATION_TYPE) {
 		return nil, fmt.Errorf("found %q, expected relationship declaration", item.value)
 	}
 
@@ -77,7 +76,7 @@ func (r *RelationshipParser) parseLong() (*Relationship, error) {
 	}
 
 	item := r.scanWithoutWhitespace()
-	if !r.isRelationToken(item.token) {
+	if !item.IsToken(G_RELATION_TYPE) {
 		return nil, fmt.Errorf("found %q, expected relationship declaration", item.value)
 	}
 	relationship.Type = item.value
@@ -113,17 +112,13 @@ func (r *RelationshipParser) parseSide() ([]LexItem, error) {
 	// then the first ident is scheme not table
 	// -> schemeA.tableA.columnA
 	item := r.scanWithoutWhitespace()
-	if (item.token & DOT) != 0 {
+	if item.IsToken(DOT) {
 		item = r.scanWithoutWhitespace()
-		if (item.token & IDENT) != 0 {
+		if item.IsToken(IDENT) {
 			relationSide = append(relationSide, item)
 		}
 	} else {
 		r.unscan()
 	}
 	return relationSide, nil
-}
-
-func (r *RelationshipParser) isRelationToken(token Token) bool {
-	return token&G_RELATION_TYPE != 0
 }

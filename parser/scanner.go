@@ -16,6 +16,10 @@ type LexItem struct {
 	position Position
 }
 
+func (l *LexItem) IsToken(expected Token) bool {
+	return (l.token & expected) != 0
+}
+
 type Position struct {
 	line   uint32
 	offset uint32
@@ -117,42 +121,6 @@ func (s *Scanner) ScanComposite(endChar rune) LexItem {
 	return item
 
 }
-
-// Scan unfiltered (with whitespace, ...)
-/*
-func (s *Scanner) Scan2(includeWhitespace bool) LexItem {
-	char := s.read()
-	fmt.Printf("scan2 %q\n", char)
-	if includeWhitespace {
-		if isWhitespace(char) {
-			s.unread()
-			return s.scanWhitespace()
-		}
-	}
-	if isLetter(char) {
-		fmt.Println("scan scan ident")
-		s.unread()
-		return s.scanIdent()
-	}
-
-	token := mapChar(char)
-	if token == LINEBR {
-		s.line += 1
-		s.offset = 0
-	}
-	item := LexItem{
-		value: string(char),
-		token: token,
-		position: Position{
-			line:   s.line,
-			offset: s.offset,
-			len:    1,
-		},
-	}
-
-	return item
-}
-*/
 
 // read reads the next rune (char) from the (buffered) reader.
 // Returns the rune(0) if an error occurs (or eofChar is returned).

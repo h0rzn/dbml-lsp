@@ -19,9 +19,13 @@ func NewStorage() *Storage {
 	}
 }
 
-func (s *Storage) GetTableByName(name string) (*TableStatement, bool) {
+func (s *Storage) TableByName(name string) (*TableStatement, bool) {
 	table, exists := s.tables[name]
 	return table, exists
+}
+
+func (s *Storage) Tables() map[string]*TableStatement {
+	return s.tables
 }
 
 // override if exists
@@ -46,7 +50,7 @@ func (s *Storage) DropTableByName(name string) {
 func (s *Storage) ColumnsByTableName(name string) []*ColumnStatement {
 	s.Lock()
 	columns := make([]*ColumnStatement, 0)
-	if table, exists := s.GetTableByName(name); exists {
+	if table, exists := s.TableByName(name); exists {
 		columns = table.Columns
 	}
 	s.Unlock()
@@ -59,7 +63,7 @@ func (s *Storage) PutRelation(relation *Relationship) {
 	s.Unlock()
 }
 
-func (s *Storage) GetRelations() []*Relationship {
+func (s *Storage) Relations() []*Relationship {
 	return s.relations
 }
 
