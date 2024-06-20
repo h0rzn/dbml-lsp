@@ -1,16 +1,21 @@
-package parser
+package explicitparser
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/h0rzn/dbml-lsp/parser/symbols"
+	"github.com/h0rzn/dbml-lsp/parser/tokens"
+)
 
 type ColumnParser struct {
 	*Parser
 }
 
-func (c *ColumnParser) Parse() (*ColumnStatement, error) {
-	statement := &ColumnStatement{}
+func (c *ColumnParser) Parse() (*symbols.Column, error) {
+	statement := &symbols.Column{}
 
 	// colum name
-	nameItem, found := c.expect(IDENT)
+	nameItem, found := c.expect(tokens.IDENT)
 	if !found {
 		return nil, fmt.Errorf("found %q, expected column name", nameItem.value)
 	}
@@ -18,16 +23,16 @@ func (c *ColumnParser) Parse() (*ColumnStatement, error) {
 	statement.Position = nameItem.position
 
 	// column type
-	typeItem, found := c.expect(IDENT)
+	typeItem, found := c.expect(tokens.IDENT)
 	if !found {
 		return nil, fmt.Errorf("found %q, expected column type", typeItem.value)
 	}
 	statement.Type = typeItem.value
 
 	// look for constraints
-	item, found := c.expect(SQUARE_OPEN)
+	item, found := c.expect(tokens.SQUARE_OPEN)
 	if !found {
-		if item.token != LINEBR {
+		if item.token != tokens.LINEBR {
 			return nil, fmt.Errorf("found %q, expected column definition stop", item.value)
 		}
 	} else {
@@ -38,7 +43,6 @@ func (c *ColumnParser) Parse() (*ColumnStatement, error) {
 		}
 		statement.Constraints = constraints
 		for _, relation := range relations {
-			fmt.Printf("* %+v\n", relation)
 			relation.ColumnA = nameItem.value
 			c.Symbols.PutRelation(relation)
 		}

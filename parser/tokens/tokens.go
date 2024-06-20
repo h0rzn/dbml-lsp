@@ -1,6 +1,8 @@
-package parser
+package tokens
 
 type Token uint64
+
+var EOFChar = rune(0)
 
 // syntax tokens
 const (
@@ -61,7 +63,7 @@ const (
 	G_RELATION_TYPE = REL_1T1 | REL_MT1 | REL_1TM | REL_MTN
 )
 
-func mapLiteral(literal string) Token {
+func MapLiteral(literal string) Token {
 	switch literal {
 	case "Table":
 		return TABLE
@@ -95,11 +97,11 @@ func mapLiteral(literal string) Token {
 	return IDENT
 }
 
-func mapChar(char rune) Token {
+func MapChar(char rune) Token {
 	switch char {
 	case '\n':
 		return LINEBR
-	case eofChar:
+	case EOFChar:
 		return EOF
 	case '/':
 		return SLASH

@@ -1,31 +1,34 @@
-package parser
+package explicitparser
 
 import (
 	"errors"
 	"fmt"
+
+	"github.com/h0rzn/dbml-lsp/parser/symbols"
+	"github.com/h0rzn/dbml-lsp/parser/tokens"
 )
 
 type TableParser struct {
 	*Parser
 }
 
-func (t *TableParser) Parse() (*TableStatement, error) {
-	statement := &TableStatement{}
-	tableItem, found := t.expect(TABLE)
+func (t *TableParser) Parse() (*symbols.Table, error) {
+	statement := &symbols.Table{}
+	tableItem, found := t.expect(tokens.TABLE)
 	if !found {
 		return nil, fmt.Errorf("found %q, expected 'Table'", tableItem.value)
 	}
 	statement.Position = tableItem.position
 
 	// find name declaration
-	nameItem, found := t.expect(IDENT)
+	nameItem, found := t.expect(tokens.IDENT)
 	if !found {
 		return nil, fmt.Errorf("found %q, expected table name declaration", nameItem.value)
 	}
 	statement.Name = nameItem.value
 
 	// find opening brace and linebreak
-	_, found = t.expectSequence(BRACE_OPEN, LINEBR)
+	_, found = t.expectSequence(tokens.BRACE_OPEN, tokens.LINEBR)
 	if !found {
 		return nil, errors.New("found ?, expected delimiter '{' for table head end")
 	}
@@ -34,9 +37,9 @@ func (t *TableParser) Parse() (*TableStatement, error) {
 	for {
 		columnItem := t.scanWithoutWhitespace()
 		switch columnItem.token {
-		case LINEBR:
+		case tokens.LINEBR:
 			continue
-		case BRACE_CLOSE:
+		case tokens.BRACE_CLOSE:
 			return statement, nil
 		default:
 			t.unscan()

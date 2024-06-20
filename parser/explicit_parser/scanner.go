@@ -1,34 +1,33 @@
-package parser
+package explicitparser
 
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io"
 	"unicode"
-)
 
-var eofChar = rune(0)
+	"github.com/h0rzn/dbml-lsp/parser/tokens"
+)
 
 type LexItem struct {
 	value    string
-	token    Token
-	position Position
+	token    tokens.Token
+	position tokens.Position
 }
 
-func (l *LexItem) IsToken(expected Token) bool {
+func (l *LexItem) IsToken(expected tokens.Token) bool {
 	return (l.token & expected) != 0
 }
 
-type Position struct {
-	line   uint32
-	offset uint32
-	len    uint32
-}
-
-func (p *Position) String() string {
-	return fmt.Sprintf("[%d:%d-%d]", p.line, p.offset, p.offset+p.len)
-}
+// type Position struct {
+// 	line   uint32
+// 	offset uint32
+// 	len    uint32
+// }
+//
+// func (p *Position) String() string {
+// 	return fmt.Sprintf("[%d:%d-%d]", p.line, p.offset, p.offset+p.len)
+// }
 
 type Scanner struct {
 	reader *bufio.Reader
@@ -58,11 +57,11 @@ func (s *Scanner) Scan() LexItem {
 		return s.scanIdent()
 	}
 
-	token := mapChar(char)
-	if token == LINEBR {
+	current := tokens.MapChar(char)
+	if current == tokens.LINEBR {
 		s.line += 1
 		s.offset = 0
-	} else if (token & REL_1TM) != 0 {
+	} else if (current & tokens.REL_1TM) != 0 {
 		// could potentially be <> and not just <
 		if s.read() != '>' {
 			s.unread()
@@ -70,11 +69,11 @@ func (s *Scanner) Scan() LexItem {
 			s.offset += 1
 			return LexItem{
 				value: "<>",
-				token: REL_MTN,
-				position: Position{
-					line:   s.line,
-					offset: s.offset,
-					len:    2,
+				token: tokens.REL_MTN,
+				position: tokens.Position{
+					Line:   s.line,
+					Offset: s.offset,
+					Len:    2,
 				},
 			}
 		}
@@ -82,11 +81,11 @@ func (s *Scanner) Scan() LexItem {
 
 	item := LexItem{
 		value: string(char),
-		token: token,
-		position: Position{
-			line:   s.line,
-			offset: s.offset,
-			len:    1,
+		token: current,
+		position: tokens.Position{
+			Line:   s.line,
+			Offset: s.offset,
+			Len:    1,
 		},
 	}
 
@@ -101,7 +100,7 @@ func (s *Scanner) ScanComposite(endChar rune) LexItem {
 	var length uint32 = 1
 	for {
 		char := s.read()
-		if char == eofChar || char == endChar {
+		if char == tokens.EOFChar || char == endChar {
 			break
 		} else {
 			length += 1
@@ -111,11 +110,11 @@ func (s *Scanner) ScanComposite(endChar rune) LexItem {
 	literal := buf.String()
 	item := LexItem{
 		value: literal,
-		token: mapLiteral(literal),
-		position: Position{
-			line:   s.line,
-			offset: s.offset - length,
-			len:    length,
+		token: tokens.MapLiteral(literal),
+		position: tokens.Position{
+			Line:   s.line,
+			Offset: s.offset - length,
+			Len:    length,
 		},
 	}
 	return item
@@ -127,7 +126,7 @@ func (s *Scanner) ScanComposite(endChar rune) LexItem {
 func (s *Scanner) read() rune {
 	char, _, err := s.reader.ReadRune()
 	if err != nil {
-		return eofChar
+		return tokens.EOFChar
 	}
 	s.offset += 1
 	return char
@@ -151,7 +150,7 @@ func (s *Scanner) scanWhitespace() LexItem {
 	var length uint32 = 1
 	for {
 		char := s.read()
-		if char == eofChar {
+		if char == tokens.EOFChar {
 			break
 		} else if !isWhitespace(char) {
 			s.unread()
@@ -163,11 +162,11 @@ func (s *Scanner) scanWhitespace() LexItem {
 	}
 	item := LexItem{
 		value: "",
-		token: WHITESPACE,
-		position: Position{
-			line:   s.line,
-			offset: s.offset - length,
-			len:    length,
+		token: tokens.WHITESPACE,
+		position: tokens.Position{
+			Line:   s.line,
+			Offset: s.offset - length,
+			Len:    length,
 		},
 	}
 	return item
@@ -182,7 +181,7 @@ func (s *Scanner) scanIdent() LexItem {
 	var length uint32 = 1
 	for {
 		char := s.read()
-		if char == eofChar {
+		if char == tokens.EOFChar {
 			break
 		} else if !isLetter(char) && !isDigit(char) {
 			s.unread()
@@ -196,11 +195,11 @@ func (s *Scanner) scanIdent() LexItem {
 	literal := buf.String()
 	item := LexItem{
 		value: literal,
-		token: mapLiteral(literal),
-		position: Position{
-			line:   s.line,
-			offset: s.offset - length,
-			len:    length,
+		token: tokens.MapLiteral(literal),
+		position: tokens.Position{
+			Line:   s.line,
+			Offset: s.offset - length,
+			Len:    length,
 		},
 	}
 	return item

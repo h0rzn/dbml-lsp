@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/h0rzn/dbml-lsp/parser"
+	explicitparser "github.com/h0rzn/dbml-lsp/parser/explicit_parser"
 )
 
 func main() {
@@ -14,17 +15,10 @@ func main() {
 	}
 	defer file.Close()
 
-	parser := parser.NewParser(file)
-	err = parser.Parse()
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(parser.Symbols.Info())
-	for i, rel := range parser.Symbols.Relations() {
-		fmt.Println(i, rel)
-	}
+	expliParser := explicitparser.NewParser(file)
+	parser := parser.NewParser(expliParser)
+	parser.Parse()
+	// fmt.Println(parser.Symbols.Info())
 	fmt.Println("---")
-	for name, tbl := range parser.Symbols.Tables() {
-		fmt.Println(name, tbl)
-	}
+	fmt.Println(parser.Symbols.ColumnsByTableName("tableA"))
 }

@@ -1,32 +1,35 @@
-package parser
+package explicitparser
 
 import (
 	"fmt"
+
+	"github.com/h0rzn/dbml-lsp/parser/symbols"
+	"github.com/h0rzn/dbml-lsp/parser/tokens"
 )
 
 type RelationshipParser struct {
 	*Parser
 }
 
-func (r *RelationshipParser) Parse(inline bool) (*Relationship, error) {
-	relationship := &Relationship{}
+func (r *RelationshipParser) Parse(inline bool) (*symbols.Relationship, error) {
+	relationship := &symbols.Relationship{}
 	var item LexItem
 
 	if !inline {
 		item = r.scanWithoutWhitespace()
 		// catch optional name
-		if item.IsToken(IDENT) {
+		if item.IsToken(tokens.IDENT) {
 			relationship.Name = item.value
 			item = r.scanWithoutWhitespace()
 		}
 
-		if item.IsToken(BRACE_OPEN) {
+		if item.IsToken(tokens.BRACE_OPEN) {
 			item = r.scanWithoutWhitespace()
-			if (item.token & LINEBR) == 0 {
-				return nil, fmt.Errorf("found %q, expected linebr after '{' for long relationsip declaration %d", item.value, item.position.line)
+			if (item.token & tokens.LINEBR) == 0 {
+				return nil, fmt.Errorf("found %q, expected linebr after '{' for long relationsip declaration %d", item.value, item.position.Line)
 			}
 		} else {
-			if item.IsToken(COLON) {
+			if item.IsToken(tokens.COLON) {
 				fmt.Println("??")
 			}
 		}
@@ -34,13 +37,13 @@ func (r *RelationshipParser) Parse(inline bool) (*Relationship, error) {
 		return relationship, err
 	}
 
-	item, exists := r.expect(COLON)
+	item, exists := r.expect(tokens.COLON)
 	if !exists {
 		return nil, fmt.Errorf("found %q, expected ':' (after 'ref')", item.value)
 	}
 
 	item = r.scanWithoutWhitespace()
-	if !item.IsToken(G_RELATION_TYPE) {
+	if !item.IsToken(tokens.G_RELATION_TYPE) {
 		return nil, fmt.Errorf("found %q, expected relationship declaration", item.value)
 	}
 
@@ -60,8 +63,8 @@ func (r *RelationshipParser) Parse(inline bool) (*Relationship, error) {
 	return relationship, nil
 }
 
-func (r *RelationshipParser) parseLong() (*Relationship, error) {
-	relationship := &Relationship{}
+func (r *RelationshipParser) parseLong() (*symbols.Relationship, error) {
+	relationship := &symbols.Relationship{}
 	sideLeft, err := r.parseSide()
 	if err != nil {
 		return nil, err
@@ -76,7 +79,7 @@ func (r *RelationshipParser) parseLong() (*Relationship, error) {
 	}
 
 	item := r.scanWithoutWhitespace()
-	if !item.IsToken(G_RELATION_TYPE) {
+	if !item.IsToken(tokens.G_RELATION_TYPE) {
 		return nil, fmt.Errorf("found %q, expected relationship declaration", item.value)
 	}
 	relationship.Type = item.value
@@ -102,7 +105,7 @@ func (r *RelationshipParser) parseSide() ([]LexItem, error) {
 	var relationSide []LexItem
 
 	// minimum requirement is: tableA.columnA
-	items, exists := r.expectSequence(IDENT, DOT, IDENT)
+	items, exists := r.expectSequence(tokens.IDENT, tokens.DOT, tokens.IDENT)
 	if !exists {
 		return relationSide, fmt.Errorf("found %v, expected table.column or scheme.table.column for relationship declaration", items)
 	}
@@ -112,9 +115,9 @@ func (r *RelationshipParser) parseSide() ([]LexItem, error) {
 	// then the first ident is scheme not table
 	// -> schemeA.tableA.columnA
 	item := r.scanWithoutWhitespace()
-	if item.IsToken(DOT) {
+	if item.IsToken(tokens.DOT) {
 		item = r.scanWithoutWhitespace()
-		if item.IsToken(IDENT) {
+		if item.IsToken(tokens.IDENT) {
 			relationSide = append(relationSide, item)
 		}
 	} else {
