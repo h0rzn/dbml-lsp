@@ -47,6 +47,5 @@ func (c *ColumnParser) Parse() (*symbols.Column, error) {
 			c.Symbols.PutRelation(relation)
 		}
 	}
-	fmt.Println("returning col", statement.Name)
 	return statement, nil
 }

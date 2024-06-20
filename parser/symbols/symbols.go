@@ -19,6 +19,7 @@ func NewStorage() *Storage {
 	}
 }
 
+// Table
 func (s *Storage) TableByName(name string) (*Table, bool) {
 	table, exists := s.tables[name]
 	return table, exists
@@ -28,17 +29,20 @@ func (s *Storage) Tables() map[string]*Table {
 	return s.tables
 }
 
-// override if exists
 func (s *Storage) PutTable(table *Table) {
 	s.Lock()
 	s.tables[table.Name] = table
 	s.Unlock()
 }
 
-func (s *Storage) DropTable(table *Table) {
-	s.Lock()
-	delete(s.tables, table.Name)
-	s.Unlock()
+func (s *Storage) UpdateTable(tableName string, updatedTable *Table) error {
+	_, exists := s.TableByName(tableName)
+	if !exists {
+		return fmt.Errorf("failed to find table %q", tableName)
+	}
+	s.PutTable(updatedTable)
+
+	return nil
 }
 
 func (s *Storage) DropTableByName(name string) {
@@ -47,6 +51,7 @@ func (s *Storage) DropTableByName(name string) {
 	s.Unlock()
 }
 
+// Column
 func (s *Storage) ColumnsByTableName(name string) []*Column {
 	s.Lock()
 	columns := make([]*Column, 0)
@@ -57,6 +62,7 @@ func (s *Storage) ColumnsByTableName(name string) []*Column {
 	return columns
 }
 
+// Relation
 func (s *Storage) PutRelation(relation *Relationship) {
 	s.Lock()
 	s.relations = append(s.relations, relation)
@@ -67,8 +73,14 @@ func (s *Storage) Relations() []*Relationship {
 	return s.relations
 }
 
+// Misc
+func (s *Storage) Clear() {
+	s.Lock()
+	clear(s.tables)
+	s.relations = nil
+	s.Unlock()
+}
+
 func (s *Storage) Info() string {
-	tableLen := len(s.tables)
-	relationLen := len(s.relations)
-	return fmt.Sprintf("Symbol Storage: %d Tables, %d Relations", tableLen, relationLen)
+	return fmt.Sprintf("Symbol Storage: %d Tables, %d Relations", len(s.tables), len(s.relations))
 }
