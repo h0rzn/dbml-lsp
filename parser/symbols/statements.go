@@ -35,8 +35,30 @@ func (t *Table) Print() {
 type Column struct {
 	Name        string
 	Type        string
-	Constraints []string
+	Constraints []*Constraint
 	Position    tokens.Position
+}
+
+func (c *Column) String() string {
+	var out string
+	out += fmt.Sprintf("%s [%s] ", c.Name, c.Type)
+	for _, constraint := range c.Constraints {
+		if len(constraint.Key) > 0 {
+			out += fmt.Sprintf("[%q: %q] ", constraint.Key, constraint.Value)
+		} else {
+			out += constraint.Value
+		}
+	}
+
+	return out
+}
+
+type Constraint struct {
+	// Only for 'key: value' constraints
+	// empty string otherwise
+	Key string
+	// Actual value like "pk"
+	Value string
 }
 
 type Relationship struct {

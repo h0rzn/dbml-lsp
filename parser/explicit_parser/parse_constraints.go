@@ -8,24 +8,19 @@ import (
 	"github.com/h0rzn/dbml-lsp/parser/tokens"
 )
 
-type KeyConstraint struct {
-	Key   string
-	Value string
-}
-
 type ConstraintParser struct {
 	*Parser
 }
 
-func (c *ConstraintParser) Parse() ([]string, []*symbols.Relationship, error) {
-	var constraints []string
+func (c *ConstraintParser) Parse() ([]*symbols.Constraint, []*symbols.Relationship, error) {
+	var constraints []*symbols.Constraint
 	var relations []*symbols.Relationship
 	var lastToken int
 	for {
 		constraintItem := c.scanWithoutWhitespace()
 		switch constraintItem.token {
 		case tokens.SQUARE_CLOSE:
-			if len(constraints) == 0 {
+			if len(constraints) == 0 && len(relations) == 0 {
 				return nil, nil, errors.New("empty constraints declaration")
 			}
 			return constraints, relations, nil
@@ -35,42 +30,38 @@ func (c *ConstraintParser) Parse() ([]string, []*symbols.Relationship, error) {
 				return nil, nil, fmt.Errorf("found %q, expected constraint delimiter", constraintItem.value)
 			}
 		case tokens.CONS_PK:
-			constraints = append(constraints, constraintItem.value)
+			constraints = append(constraints, &symbols.Constraint{Key: "", Value: constraintItem.value})
 		case tokens.CONS_PRIMARY:
 			item, found := c.expect(tokens.CONS_KEY)
 			if !found {
 				return nil, nil, fmt.Errorf("found %q, expected 'key' after 'primary'", item.value)
 			}
-			constraints = append(constraints, "primary key")
+			constraints = append(constraints, &symbols.Constraint{Key: "", Value: "primary key"})
 		case tokens.CONS_INCREMENT:
 			fallthrough
 		case tokens.CONS_UNIQUE:
-			constraints = append(constraints, constraintItem.value)
-
+			constraints = append(constraints, &symbols.Constraint{Key: "", Value: constraintItem.value})
 		case tokens.NOTE:
-			item, err := c.parseKeyConstraint(tokens.NOTE)
+			keyConstraint, err := c.parseKeyConstraint(tokens.NOTE)
 			if err != nil {
 				fmt.Println(err)
 			}
-			keyedConstraintValue := item.Key + ":" + item.Value
-			constraints = append(constraints, keyedConstraintValue)
+			constraints = append(constraints, keyConstraint)
 		case tokens.CONS_NOT:
 			item, found := c.expect(tokens.CONS_NULL)
 			if !found {
 				return nil, nil, fmt.Errorf("found %q, expected 'null' (not null)", item.value)
 			}
-			constraints = append(constraints, "not null")
+			constraints = append(constraints, &symbols.Constraint{Key: "", Value: item.value})
 
 		case tokens.REF_LOW:
 			rel, err := c.parseRelationship(true)
 			if err != nil {
 				return nil, nil, err
 			}
-			// TODO: dont take [] as empty constraint declaration
-			constraints = append(constraints, rel.String())
 			relations = append(relations, rel)
 		case tokens.UNKOWN:
-
+			return nil, nil, fmt.Errorf("parse_contraints: unkown token (unhandled): %q %s", constraintItem.token, constraintItem.value)
 		default:
 			// error unkown token
 			if constraintItem.token == tokens.IDENT {
@@ -81,11 +72,14 @@ func (c *ConstraintParser) Parse() ([]string, []*symbols.Relationship, error) {
 	}
 }
 
-func (c *ConstraintParser) parseKeyConstraint(keyToken tokens.Token) (constraint KeyConstraint, err error) {
+func (c *ConstraintParser) parseKeyConstraint(keyToken tokens.Token) (*symbols.Constraint, error) {
 	if keyToken != tokens.NOTE {
-		return constraint, fmt.Errorf("unexpected keyed constraint: %q", keyToken)
+		return nil, fmt.Errorf("unexpected keyed constraint: %q", keyToken)
 	}
-	constraint.Key = "note"
+	constraint := &symbols.Constraint{
+		Key: "note",
+	}
+
 	item, found := c.expect(tokens.COLON)
 	if !found {
 		return constraint, fmt.Errorf("found %q, expected ':' (key-value-delimiter missing)", item.value)
@@ -97,7 +91,7 @@ func (c *ConstraintParser) parseKeyConstraint(keyToken tokens.Token) (constraint
 	}
 
 	item = c.scanner.ScanComposite('"')
-
 	constraint.Value = item.value
-	return
+
+	return constraint, nil
 }

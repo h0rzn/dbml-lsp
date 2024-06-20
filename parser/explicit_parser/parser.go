@@ -45,7 +45,6 @@ func (p *Parser) Parse() error {
 				return err
 			}
 			p.Symbols.PutTable(table)
-			fmt.Println(table)
 		case tokens.REF_CAP:
 			// explicit pass of declaration type,
 			// introducing token is not expected
@@ -53,7 +52,6 @@ func (p *Parser) Parse() error {
 			if err != nil {
 				return err
 			}
-			fmt.Printf("relationship: %+v\n", rel)
 			p.Symbols.PutRelation(rel)
 		default:
 			return fmt.Errorf("unexpected: %q", item.value)
@@ -117,7 +115,7 @@ func (p *Parser) parseColumnDefinition() (*symbols.Column, error) {
 // this function expects the opening square bracket '[' to be already read
 // a, b, c]
 // ^ starting position
-func (p *Parser) parseConstraints() ([]string, []*symbols.Relationship, error) {
+func (p *Parser) parseConstraints() ([]*symbols.Constraint, []*symbols.Relationship, error) {
 	parser := &ConstraintParser{p}
 	return parser.Parse()
 }
