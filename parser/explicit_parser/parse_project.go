@@ -25,9 +25,16 @@ func (p *ProjectParser) Parse() (*symbols.Project, error) {
 
 	for {
 		keyItem := p.scanWithoutWhitespace()
-		if keyItem.IsToken(tokens.BRACE_CLOSE | tokens.LINEBR) {
+		switch keyItem.token {
+		case tokens.BRACE_CLOSE:
 			return project, nil
-		} else if keyItem.IsToken(tokens.G_PROJECT_OPTS) {
+		case tokens.LINEBR:
+			continue
+		default:
+			if !keyItem.IsToken(tokens.G_PROJECT_OPTS) {
+				return nil, fmt.Errorf("found %q, expected project option key", keyItem.value)
+			}
+
 			colonItem, found := p.expect(tokens.COLON)
 			if !found {
 				return nil, fmt.Errorf("found %q, expected ':' (key-value-delimiter missing)", colonItem.value)
@@ -40,8 +47,7 @@ func (p *ProjectParser) Parse() (*symbols.Project, error) {
 
 			valueItem := p.scanner.ScanComposite('"')
 			project.Options[keyItem.value] = valueItem.value
-		} else {
-			return nil, fmt.Errorf("found %q, expected project option key", keyItem.value)
+
 		}
 	}
 }

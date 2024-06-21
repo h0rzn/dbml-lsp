@@ -87,7 +87,6 @@ func (p *Parser) ParseDefinitionHead(startToken tokens.Token) (position tokens.P
 	if !found {
 		return position, "", errors.New("found ?, expected delimiter '{' for definition head end")
 	}
-	fmt.Println(startItem.position, nameItem.value)
 	return startItem.position, nameItem.value, nil
 }
 
