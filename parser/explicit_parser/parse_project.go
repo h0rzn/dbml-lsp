@@ -1,7 +1,6 @@
 package explicitparser
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/h0rzn/dbml-lsp/parser/symbols"
@@ -16,24 +15,13 @@ func (p *ProjectParser) Parse() (*symbols.Project, error) {
 	project := &symbols.Project{
 		Options: make(map[string]string),
 	}
-	projectItem, found := p.expect(tokens.PROJECT)
-	if !found {
-		return nil, fmt.Errorf("found %q, expected 'Project'", projectItem.value)
-	}
-	project.Position = projectItem.position
 
-	// find name declaration
-	nameItem, found := p.expect(tokens.IDENT)
-	if !found {
-		return nil, fmt.Errorf("found %q, expected table name declaration", nameItem.value)
+	position, name, err := p.ParseDefinitionHead(tokens.PROJECT)
+	if err != nil {
+		return nil, err
 	}
-	project.Name = nameItem.value
-
-	// find opening brace and linebreak
-	_, found = p.expectSequence(tokens.BRACE_OPEN, tokens.LINEBR)
-	if !found {
-		return nil, errors.New("found ?, expected delimiter '{' for project definition head end")
-	}
+	project.Position = position
+	project.Name = name
 
 	for {
 		keyItem := p.scanWithoutWhitespace()

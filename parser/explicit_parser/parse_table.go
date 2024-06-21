@@ -1,9 +1,6 @@
 package explicitparser
 
 import (
-	"errors"
-	"fmt"
-
 	"github.com/h0rzn/dbml-lsp/parser/symbols"
 	"github.com/h0rzn/dbml-lsp/parser/tokens"
 )
@@ -14,24 +11,12 @@ type TableParser struct {
 
 func (t *TableParser) Parse() (*symbols.Table, error) {
 	statement := &symbols.Table{}
-	tableItem, found := t.expect(tokens.TABLE)
-	if !found {
-		return nil, fmt.Errorf("found %q, expected 'Table'", tableItem.value)
+	position, name, err := t.ParseDefinitionHead(tokens.TABLE)
+	if err != nil {
+		return nil, err
 	}
-	statement.Position = tableItem.position
-
-	// find name declaration
-	nameItem, found := t.expect(tokens.IDENT)
-	if !found {
-		return nil, fmt.Errorf("found %q, expected table name declaration", nameItem.value)
-	}
-	statement.Name = nameItem.value
-
-	// find opening brace and linebreak
-	_, found = t.expectSequence(tokens.BRACE_OPEN, tokens.LINEBR)
-	if !found {
-		return nil, errors.New("found ?, expected delimiter '{' for table head end")
-	}
+	statement.Position = position
+	statement.Name = name
 
 	// column definitions
 	for {

@@ -23,9 +23,10 @@ func main() {
 	}
 	fmt.Println(parser.Symbols.Info())
 	fmt.Println("---")
-	cols := parser.Symbols.ColumnsByTableName("tableA")
-	fmt.Println("found columns", len(cols))
-	for i, col := range cols {
-		fmt.Println(i, col)
+	table, exists := parser.Symbols.TableByName("tableA")
+	if !exists {
+		panic("not exists")
 	}
+	fmt.Println(table.Name)
+	fmt.Println(table.Position)
 }

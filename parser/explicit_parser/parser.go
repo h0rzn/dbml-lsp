@@ -1,6 +1,7 @@
 package explicitparser
 
 import (
+	"errors"
 	"fmt"
 	"io"
 
@@ -68,6 +69,26 @@ func (p *Parser) Parse() error {
 		}
 	}
 	return nil
+}
+
+func (p *Parser) ParseDefinitionHead(startToken tokens.Token) (position tokens.Position, name string, err error) {
+	startItem, found := p.expect(startToken)
+	if !found {
+		// return fmt.Errorf("found %q, expected 'Table'", tableItem.value)
+		return position, "", fmt.Errorf("found %q, expected definition type", startItem.value)
+	}
+
+	nameItem, found := p.expect(tokens.IDENT)
+	if !found {
+		return position, "", fmt.Errorf("found %q, expected definition name declaration", nameItem.value)
+	}
+
+	_, found = p.expectSequence(tokens.BRACE_OPEN, tokens.LINEBR)
+	if !found {
+		return position, "", errors.New("found ?, expected delimiter '{' for definition head end")
+	}
+	fmt.Println(startItem.position, nameItem.value)
+	return startItem.position, nameItem.value, nil
 }
 
 // scan returns next token from scanner.
