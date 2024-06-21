@@ -64,6 +64,19 @@ func (p *Parser) Parse() error {
 			}
 			p.Symbols.PutRelation(rel)
 
+		case tokens.SLASH:
+			item, exists := p.expect(tokens.SLASH)
+			if !exists {
+				return fmt.Errorf("found %q, expected trailing '/' (comment)", item.value)
+			}
+
+			for {
+				item := p.scan()
+				if item.IsToken(tokens.LINEBR) {
+					break
+				}
+			}
+
 		default:
 			return fmt.Errorf("unexpected: %q", item.value)
 		}
