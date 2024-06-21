@@ -38,6 +38,14 @@ func (p *Parser) Parse() error {
 		}
 
 		switch item.token {
+		case tokens.PROJECT:
+			p.unscan()
+			project, err := p.parseProjectDefinition()
+			if err != nil {
+				return err
+			}
+			p.Symbols.SetProject(project)
+
 		case tokens.TABLE:
 			p.unscan()
 			table, err := p.parseTableDefinition()
@@ -45,6 +53,7 @@ func (p *Parser) Parse() error {
 				return err
 			}
 			p.Symbols.PutTable(table)
+
 		case tokens.REF_CAP:
 			// explicit pass of declaration type,
 			// introducing token is not expected
@@ -53,6 +62,7 @@ func (p *Parser) Parse() error {
 				return err
 			}
 			p.Symbols.PutRelation(rel)
+
 		default:
 			return fmt.Errorf("unexpected: %q", item.value)
 		}
@@ -91,6 +101,11 @@ func (p *Parser) scanWithoutWhitespace() LexItem {
 		item = p.scan()
 	}
 	return item
+}
+
+func (p *Parser) parseProjectDefinition() (*symbols.Project, error) {
+	parser := &ProjectParser{p}
+	return parser.Parse()
 }
 
 func (p *Parser) parseTableDefinition() (*symbols.Table, error) {

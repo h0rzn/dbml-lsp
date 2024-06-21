@@ -1,3 +1,7 @@
+Project testProject {
+	Note: "test"
+}
+
 Table tableA { 
 	id integer [pk, unique]
 	keyB valB [note: "test123 123", unique]

@@ -17,8 +17,15 @@ func main() {
 
 	expliParser := explicitparser.NewParser(file)
 	parser := parser.NewParser(expliParser)
-	parser.Parse()
-	// fmt.Println(parser.Symbols.Info())
+	err = parser.Parse()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(parser.Symbols.Info())
 	fmt.Println("---")
-	fmt.Println(parser.Symbols.ColumnsByTableName("tableA"))
+	cols := parser.Symbols.ColumnsByTableName("tableA")
+	fmt.Println("found columns", len(cols))
+	for i, col := range cols {
+		fmt.Println(i, col)
+	}
 }

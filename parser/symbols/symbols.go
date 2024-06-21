@@ -7,6 +7,7 @@ import (
 
 type Storage struct {
 	*sync.Mutex
+	project   *Project
 	tables    map[string]*Table
 	relations []*Relationship
 }
@@ -14,9 +15,19 @@ type Storage struct {
 func NewStorage() *Storage {
 	return &Storage{
 		&sync.Mutex{},
+		&Project{},
 		make(map[string]*Table),
 		make([]*Relationship, 0),
 	}
+}
+
+// Project
+func (s *Storage) SetProject(project *Project) {
+	s.project = project
+}
+
+func (s *Storage) GetProject() *Project {
+	return s.project
 }
 
 // Table
@@ -82,5 +93,5 @@ func (s *Storage) Clear() {
 }
 
 func (s *Storage) Info() string {
-	return fmt.Sprintf("Symbol Storage: %d Tables, %d Relations", len(s.tables), len(s.relations))
+	return fmt.Sprintf("Symbol Storage: [project defined: %t], %d Tables, %d Relations", s.project != nil, len(s.tables), len(s.relations))
 }

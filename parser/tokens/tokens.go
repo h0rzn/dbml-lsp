@@ -19,11 +19,14 @@ const (
 	//
 	// keywords
 	//
-	TABLE              // Table
-	ENUM               // enum
-	COL_SETTING_CUSTOM // something like id "bigint unsigned" [pk]
-	REF_CAP            // Ref
-	REF_LOW            // ref (inline)
+	PROJECT               // Project
+	PROJECT_DATABASE_TYPE // database_type
+	PROJECT_NOTE          // Note (used in project definition)
+	TABLE                 // Table
+	ENUM                  // enum
+	COL_SETTING_CUSTOM    // something like id "bigint unsigned" [pk]
+	REF_CAP               // Ref
+	REF_LOW               // ref (inline)
 	// keywords: constraints
 	CONS_PK        // pk (short for primary key)
 	CONS_PRIMARY   // primary (followed by key)
@@ -61,10 +64,17 @@ const (
 	// GROUPS
 	//
 	G_RELATION_TYPE = REL_1T1 | REL_MT1 | REL_1TM | REL_MTN
+	G_PROJECT_OPTS  = PROJECT_NOTE | PROJECT_DATABASE_TYPE
 )
 
 func MapLiteral(literal string) Token {
 	switch literal {
+	case "Project":
+		return PROJECT
+	case "Note":
+		return PROJECT_NOTE
+	case "database_type":
+		return PROJECT_DATABASE_TYPE
 	case "Table":
 		return TABLE
 	case "enum":

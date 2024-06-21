@@ -7,6 +7,12 @@ import (
 	"github.com/h0rzn/dbml-lsp/parser/tokens"
 )
 
+type Project struct {
+	Options  map[string]string
+	Name     string
+	Position tokens.Position
+}
+
 type Table struct {
 	Name     string
 	Columns  []*Column
