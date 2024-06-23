@@ -28,11 +28,10 @@ func (r *RelationshipParser) Parse(inline bool) (*symbols.Relationship, error) {
 			if (item.token & tokens.LINEBR) == 0 {
 				return nil, fmt.Errorf("found %q, expected linebr after '{' for long relationsip declaration %d", item.value, item.position.Line)
 			}
-		} else {
-			if item.IsToken(tokens.COLON) {
-				fmt.Println("??")
-			}
+		} else if !item.IsToken(tokens.COLON) {
+			return relationship, fmt.Errorf("found %q, expeceted ':' after 'Ref' with name", item.value)
 		}
+
 		relationship, err := r.parseLong()
 		return relationship, err
 	}

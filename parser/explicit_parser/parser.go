@@ -10,9 +10,10 @@ import (
 )
 
 type Parser struct {
-	scanner *Scanner
-	Symbols *symbols.Storage
-	buffer  struct {
+	scanner  *Scanner
+	Symbols  *symbols.Storage
+	tableCtx *symbols.Table
+	buffer   struct {
 		current LexItem
 		size    int
 	}
@@ -26,6 +27,14 @@ func NewParser(r io.Reader) *Parser {
 
 func (p *Parser) SetSymbols(storage *symbols.Storage) {
 	p.Symbols = storage
+}
+
+func (p *Parser) SetTableCtx(table *symbols.Table) {
+	p.tableCtx = table
+}
+
+func (p *Parser) GetTableCtx() *symbols.Table {
+	return p.tableCtx
 }
 
 func (p *Parser) Parse() error {
@@ -62,7 +71,15 @@ func (p *Parser) Parse() error {
 			if err != nil {
 				return err
 			}
-			p.Symbols.PutRelation(rel)
+			table, exists := p.Symbols.TableByName(rel.TableA)
+			if !exists {
+				return fmt.Errorf("reference: host table %q does not exist", rel.TableA)
+			}
+			table.References = append(table.References, rel)
+			err = p.Symbols.UpdateTable(table.Name, table)
+			if err != nil {
+				return err
+			}
 
 		case tokens.SLASH:
 			item, exists := p.expect(tokens.SLASH)
@@ -168,7 +185,7 @@ func (p *Parser) parseRelationship(inline bool) (*symbols.Relationship, error) {
 // parseColumnDefinition parses a column definition.
 // e.g. id integer [pk, unique]
 // returns a column statement and error
-func (p *Parser) parseColumnDefinition() (*symbols.Column, error) {
+func (p *Parser) parseColumnDefinition() (*symbols.Column, []*symbols.Relationship, error) {
 	parser := &ColumnParser{p}
 	return parser.Parse()
 }

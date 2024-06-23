@@ -14,10 +14,11 @@ type Project struct {
 }
 
 type Table struct {
-	Scheme   string
-	Name     string
-	Columns  []*Column
-	Position tokens.Position
+	Scheme     string
+	Name       string
+	Columns    []*Column
+	References []*Relationship
+	Position   tokens.Position
 }
 
 func (t *Table) String() string {
@@ -83,4 +84,10 @@ func (r *Relationship) String() string {
 	format := "%s %s.%s.%s %s %s.%s.%s"
 	return fmt.Sprintf(format, r.Name, r.SchemeA, r.TableA, r.ColumnA, r.Type, r.SchemeB, r.TableB, r.ColumnB)
 
+}
+
+type ReferenceTo struct {
+	RefTable  string
+	RefColumn string
+	Type      string
 }

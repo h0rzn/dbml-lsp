@@ -18,6 +18,7 @@ func (t *TableParser) Parse() (*symbols.Table, error) {
 	statement.Position = position
 	statement.Scheme = scheme
 	statement.Name = name
+	t.SetTableCtx(statement)
 
 	// column definitions
 	for {
@@ -29,11 +30,12 @@ func (t *TableParser) Parse() (*symbols.Table, error) {
 			return statement, nil
 		default:
 			t.unscan()
-			column, err := t.parseColumnDefinition()
+			column, relations, err := t.parseColumnDefinition()
 			if err != nil {
 				return nil, err
 			}
 			statement.Columns = append(statement.Columns, column)
+			statement.References = relations
 		}
 	}
 }
