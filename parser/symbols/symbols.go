@@ -8,14 +8,14 @@ import (
 type Storage struct {
 	*sync.Mutex
 	project *Project
-	tables  map[string]*Table
+	tables  map[uint32]*Table
 }
 
 func NewStorage() *Storage {
 	return &Storage{
 		&sync.Mutex{},
 		&Project{},
-		make(map[string]*Table),
+		make(map[uint32]*Table),
 	}
 }
 
@@ -30,17 +30,23 @@ func (s *Storage) GetProject() *Project {
 
 // Table
 func (s *Storage) TableByName(name string) (*Table, bool) {
-	table, exists := s.tables[name]
-	return table, exists
+	// table, exists := s.tables[name]
+	for _, table := range s.tables {
+		if table.Name == name {
+			return table, true
+		}
+	}
+
+	return nil, false
 }
 
-func (s *Storage) Tables() map[string]*Table {
+func (s *Storage) Tables() map[uint32]*Table {
 	return s.tables
 }
 
 func (s *Storage) PutTable(table *Table) {
 	s.Lock()
-	s.tables[table.Name] = table
+	s.tables[table.Position.Line] = table
 	s.Unlock()
 }
 
@@ -56,7 +62,18 @@ func (s *Storage) UpdateTable(tableName string, updatedTable *Table) error {
 
 func (s *Storage) DropTableByName(name string) {
 	s.Lock()
-	delete(s.tables, name)
+	var line uint32
+	var found bool
+
+	for l, table := range s.tables {
+		if table.Name == name {
+			line = l
+			found = true
+		}
+	}
+	if found {
+		delete(s.tables, line)
+	}
 	s.Unlock()
 }
 
