@@ -11,11 +11,12 @@ type TableParser struct {
 
 func (t *TableParser) Parse() (*symbols.Table, error) {
 	statement := &symbols.Table{}
-	position, name, err := t.ParseDefinitionHead(tokens.TABLE)
+	position, scheme, name, err := t.ParseDefinitionHead(tokens.TABLE)
 	if err != nil {
 		return nil, err
 	}
 	statement.Position = position
+	statement.Scheme = scheme
 	statement.Name = name
 
 	// column definitions

@@ -14,6 +14,7 @@ type Project struct {
 }
 
 type Table struct {
+	Scheme   string
 	Name     string
 	Columns  []*Column
 	Position tokens.Position

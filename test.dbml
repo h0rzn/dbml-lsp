@@ -1,8 +1,12 @@
+
+// test 1
+
+
 Project A {
 	Note: "test"
 }
-
-Table tableA { 
+// Test 123
+Table s1.tableA { 
 	id integer [pk, unique]
 	keyB valB [note: "test123 123", unique]
 	a b [ref: - tableB.id]

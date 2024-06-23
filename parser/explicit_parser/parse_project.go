@@ -16,7 +16,7 @@ func (p *ProjectParser) Parse() (*symbols.Project, error) {
 		Options: make(map[string]string),
 	}
 
-	position, name, err := p.ParseDefinitionHead(tokens.PROJECT)
+	position, _, name, err := p.ParseDefinitionHead(tokens.PROJECT)
 	if err != nil {
 		return nil, err
 	}

@@ -84,23 +84,37 @@ func (p *Parser) Parse() error {
 	return nil
 }
 
-func (p *Parser) ParseDefinitionHead(startToken tokens.Token) (position tokens.Position, name string, err error) {
+func (p *Parser) ParseDefinitionHead(startToken tokens.Token) (position tokens.Position, scheme string, name string, err error) {
 	startItem, found := p.expect(startToken)
 	if !found {
-		// return fmt.Errorf("found %q, expected 'Table'", tableItem.value)
-		return position, "", fmt.Errorf("found %q, expected definition type", startItem.value)
+		return position, scheme, name, fmt.Errorf("found %q, expected definition type", startItem.value)
 	}
 
 	nameItem, found := p.expect(tokens.IDENT)
 	if !found {
-		return position, "", fmt.Errorf("found %q, expected definition name declaration", nameItem.value)
+		return position, scheme, name, fmt.Errorf("found %q, expected definition name declaration", nameItem.value)
+	}
+
+	nextItem := p.scan()
+	if nextItem.IsToken(tokens.DOT) {
+		name2Item, found := p.expect(tokens.IDENT)
+		if !found {
+			return position, scheme, name, fmt.Errorf("found %q, expected name after '.'", name2Item.value)
+		}
+		name = name2Item.value
+		scheme = nameItem.value
+	} else if nextItem.IsToken(tokens.WHITESPACE) {
+		name = nameItem.value
+	} else {
+		// unhandled token
+		return position, scheme, name, fmt.Errorf("unexpected %q", nextItem.value)
 	}
 
 	_, found = p.expectSequence(tokens.BRACE_OPEN, tokens.LINEBR)
 	if !found {
-		return position, "", errors.New("found ?, expected delimiter '{' for definition head end")
+		return position, scheme, name, errors.New("found ?, expected delimiter '{' for definition head end")
 	}
-	return startItem.position, nameItem.value, nil
+	return startItem.position, scheme, name, nil
 }
 
 // scan returns next token from scanner.
