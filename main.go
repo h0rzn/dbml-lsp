@@ -23,11 +23,9 @@ func main() {
 	}
 	fmt.Println(parser.Symbols.Info())
 	fmt.Println("---")
-	fmt.Printf("%+v\n", parser.Symbols.Tables())
-	table, exists := parser.Symbols.TableByName("tableA")
-	if !exists {
-		panic("table does not exists")
+	table, err := parser.Symbols.FindTable(0)
+	if err != nil {
+		panic(err)
 	}
-	fmt.Println(table.Name)
-	fmt.Println(table.Position)
+	fmt.Println("found table:", table.Name, table.Position)
 }

@@ -84,6 +84,27 @@ func (p *Parser) Parse() error {
 	return nil
 }
 
+func (p *Parser) ParseLine(line uint32) error {
+	// check what type of line (defintion head, body, ...)
+	table, err := p.Symbols.FindTable(line)
+	if err != nil {
+		return err
+	}
+	_ = table
+
+	// set scanner cursor to given line
+	err = p.scanner.SetLine(line)
+	if err != nil {
+		return nil
+	}
+
+	// parse current line
+
+	// update symbol in storage
+
+	return nil
+}
+
 func (p *Parser) ParseDefinitionHead(startToken tokens.Token) (position tokens.Position, scheme string, name string, err error) {
 	startItem, found := p.expect(startToken)
 	if !found {

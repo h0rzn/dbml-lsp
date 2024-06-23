@@ -1,10 +1,15 @@
 package symbols
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 )
 
+// Storage stores:
+// - Project Info
+// - Tables
+// - Relations (Ref)
 type Storage struct {
 	*sync.Mutex
 	project   *Project
@@ -60,6 +65,17 @@ func (s *Storage) DropTableByName(name string) {
 	s.Lock()
 	delete(s.tables, name)
 	s.Unlock()
+}
+
+func (s *Storage) FindTable(line uint32) (*Table, error) {
+	s.Lock()
+	for _, table := range s.tables {
+		if table.Position.Line == line {
+			return table, nil
+		}
+	}
+	s.Unlock()
+	return nil, errors.New("not found")
 }
 
 // Column

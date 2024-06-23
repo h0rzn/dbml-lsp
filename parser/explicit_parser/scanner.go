@@ -19,16 +19,6 @@ func (l *LexItem) IsToken(expected tokens.Token) bool {
 	return (l.token & expected) != 0
 }
 
-// type Position struct {
-// 	line   uint32
-// 	offset uint32
-// 	len    uint32
-// }
-//
-// func (p *Position) String() string {
-// 	return fmt.Sprintf("[%d:%d-%d]", p.line, p.offset, p.offset+p.len)
-// }
-
 type Scanner struct {
 	reader *bufio.Reader
 	// current focused line
@@ -91,6 +81,12 @@ func (s *Scanner) Scan() LexItem {
 
 	return item
 
+}
+
+func (s *Scanner) SetLine(line uint32) error {
+	// set cursor to this line
+
+	return nil
 }
 
 func (s *Scanner) ScanComposite(endChar rune) LexItem {
