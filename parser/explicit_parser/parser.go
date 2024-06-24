@@ -98,6 +98,7 @@ func (p *Parser) Parse() error {
 			return fmt.Errorf("unexpected: %q", item.value)
 		}
 	}
+
 	return nil
 }
 

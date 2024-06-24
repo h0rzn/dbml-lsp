@@ -17,17 +17,27 @@ func main() {
 
 	expliParser := explicitparser.NewParser(file)
 	parser := parser.NewParser(expliParser)
+	err = parser.Init()
+	if err != nil {
+		panic(err)
+	}
 	err = parser.Parse()
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(parser.Symbols.Info())
-	fmt.Println("---")
-	fmt.Printf("%+v\n", parser.Symbols.Tables())
 	table, exists := parser.Symbols.TableByName("tableA")
 	if !exists {
 		panic("table does not exists")
 	}
-	fmt.Println(table.Name)
-	fmt.Println(table.Position)
+	fmt.Println(table)
+	fmt.Println("---")
+	err = parser.Parse()
+	if err != nil {
+		panic(err)
+	}
+	table, exists = parser.Symbols.TableByName("tableA")
+	if !exists {
+		panic("table does not exists")
+	}
+	fmt.Println(table)
 }

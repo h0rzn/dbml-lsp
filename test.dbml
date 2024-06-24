@@ -1,20 +1,13 @@
-
-// test 1
-
-
-Project A {
-	Note: "test"
-}
-// Test 123
 Table s1.tableA { 
-	id integer [pk, unique]
-	keyB valB [note: "test123 123", unique]
-	a b [ref: - tableB.id]
+	a b
+	c d
 }
 
-Table tableB {
-	id integer [not null, unique]
-	keyBB integer [primary key]
-	keyBC type [pk, primary key]
-}
+Ref optame: tableA.col - tableA.a
+
+//Table tableB {
+//	id integer [not null, unique]
+//	keyBB integer [primary key]
+//	keyBC type [pk, primary key]
+//}
 
